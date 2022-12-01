@@ -9,33 +9,16 @@ import time
 
 cavernFile = ""
 fl = None
-#CAVERN_ARRAY = []
 cavern_matrix = None
-#Nodes = []
-
-"""Find the file supplied in the command line arg"""
-def load_file(filename):
-    global cavernFile
-    
-    """this_dir = os.getcwd()
-    # Look through this directory for given filename
-    while 1:
-        this_dir_files = os.listdir(this_dir)
-        # File found
-        if cavernFile in this_dir_files:
-            break
-        # File NOT found
-        else:          
-            print("Could not find "+cavernFile+" in current dir!")
-            exit(1)"""
 
 """"open_list file and write contents to variable"""
 def process_file(_file):
+    global fl
     cavernFile = (_file + ".cav")
+    fl = _file
     with open(cavernFile) as f:
         for l in f: 
             cv = l.split(",")
-    print("Read file --- %s seconds ---" % (time.time() - start_time))
     return [int(x) for x in cv]
 
 def process_cavern_arr(c_array):
@@ -45,7 +28,6 @@ def process_cavern_arr(c_array):
     Some tunnels are one-way"""
     global cavern_matrix
 
-    #print("Started data readying --- %s seconds ---" % (time.time() - start_time))
     n = c_array[0] # number of caverns - 1st element
     coords = c_array[1:n*2+1] # Unsorted sequence of coordinates - 2nd element ... n*2 element
     coordinates = list(zip(coords[::2], coords[1::2])) # Sorted coordinates (above)
@@ -53,9 +35,6 @@ def process_cavern_arr(c_array):
     cavern_matrix = np.reshape(matrix_seq, (n, n)) # Matrix as a 2D 7x7 array
     start = coordinates[0] # First Node
     end = coordinates[-1] # End Node
-
-    #print("Data ready --- %s seconds ---" % (time.time() - start_time))
-    global Nodes
 
     AStarAlgorithm(start, end, n, cavern_matrix, coordinates)
 
@@ -66,7 +45,14 @@ def showPath(currentNode):
         path.append(currentNode.number)
         currentNode = currentNode.parent
     print(path[::-1])
-    #print("Finish --- %s seconds ---" % (time.time() - start_time))
+    write_results(path[::-1])
+
+"""Writes the results to file .csn"""
+def write_results(path):
+    f = open(fl + ".csn", "w")
+    for p in path:
+        f.write(str(p) + " ")
+    exit(1)
     
 """Run the A* Algorithm"""
 def AStarAlgorithm(_start, _end, n, matrix, coords):
@@ -85,25 +71,26 @@ def AStarAlgorithm(_start, _end, n, matrix, coords):
 
     # First add startNode to begin
     open_list.append(startNode)
-
+    
     while len(open_list) > 0:
+
         current_node = open_list[0]
         current_index = 0
-        
+
+        # Get node with lowest F score
         for idx, node in enumerate(open_list):
-            #print(f'[Checking Node]{node.coord} F value = {node.F}, ....,[Current Node] {current_node.coord} F value = {current_node.F}')   
             if node.F < current_node.F:               
                 current_node = node
                 current_index = idx
+
+        if current_node is None:
+            return "Path does not exist"
 
         # If the next node is the end node
         if current_node == endNode:
             showPath(current_node)
             break
- 
-        open_list.pop(current_index)
-        closed_list.append(current_node)
-        
+
         children = []
 
         # Loop over coordinates and create all Nodes
@@ -113,6 +100,10 @@ def AStarAlgorithm(_start, _end, n, matrix, coords):
                 children.append(childNode)
 
         for child in children:
+            if child in open_list and child.G > current_node.G:
+                continue
+            if child in closed_list:
+                continue
             if not child in open_list and not child in closed_list:
                 child.G = current_node.G + current_node.euclideanDist(child)
                 child.H = child.euclideanDist(endNode)
@@ -127,7 +118,14 @@ def AStarAlgorithm(_start, _end, n, matrix, coords):
                 if child in closed_list:
                     closed_list.remove(child)
                     open_list.append(child)
-    return "No path"
+                    #print(f'Switching child Node {child.number} from closed to open list')
+        # Node has been expanded
+        open_list.pop(current_index)
+        #print(f'Removing node {current_node.number} from open list')
+        closed_list.append(current_node)
+        #print(f'Adding node {current_node.number} to closed list')
+
+    write_results(["No Path"])
 
 """Program starting point"""
 def main():
