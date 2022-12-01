@@ -1,13 +1,16 @@
+from queue import PriorityQueue
 import sys
 from sys import argv
 import os
 import numpy as np
+import math
 from AStarNode import Node
 
 cavernFile = ""
 fl = None
 CAVERN_ARRAY = []
 cavern_matrix = None
+Nodes = []
 
 # Find the file supplied in the command line arg
 def load_file(filename):
@@ -25,7 +28,7 @@ def load_file(filename):
             print("Could not find "+cavernFile+" in current dir!")
             exit(1)
 
-# Open file and write contents to variable
+# open_list file and write contents to variable
 def process_file(_file):
     with open(_file, 'r') as filestream:
         for l in filestream:
@@ -37,7 +40,6 @@ def process_cavern_arr(c_array):
     The next N*2 integers represent each of the coordinates - each value is non-negative
     The final N*N integers represent the connectivity of the tunnels. 1 - connected, 0 - not connected
     Some tunnels are one-way"""
-
     global cavern_matrix
 
     # Create small validation effort to ensure cavern array is correct length before proceeding
@@ -57,16 +59,157 @@ def process_cavern_arr(c_array):
     start = coordinates[0] # First Node
     end = coordinates[-1] # End Node
 
+    global Nodes
+
+    print(AStarAlgorithm(start, end, n, cavern_matrix, coordinates))
+
+    
+def showPath(cameFrom, end_node):
+    total_path = {end_node.number}
+    for end_node in cameFrom:
+        end_node = cameFrom[end_node]
+        total_path.add(end_node.number)
+    print(total_path)
   
-def AStar(_matrix, _start, _end):
-    start_node = _start
-    end_node = _end
+def AStarAlgorithm(_start, _end, n, matrix, coords, cost=1):
+    """
+    startNode = Node(_start, None, 1)
+    endNode = Node(_end, None, n)
+    matrix = matrix
+    coordinates = coords
+
+    openSet = PriorityQueue()
+    openSet.put((math.inf, startNode))
+
+    closedSet = []
+
+    cameFrom = {}
+    gScore = {}
+    gScore[startNode] = 0
+
+    fScore = {}
+    fScore[startNode] = startNode.euclideanDist(endNode) 
+    fScore[endNode] = 0
+
+    loops = 0
+
+    while not openSet.empty():
+
+        loops += 1
+        #print(f'Current loop: {loops}')
+        print('Open set:')
+        for item in openSet.queue:
+            print(f'Node {item[1].number}.. F Cost: {fScore[item[1]]}')
+        current = openSet.get()[1]
+        
+        print(f'Opening node {current.number}')
+        if current.coord == endNode.coord:
+            showPath(cameFrom, current)
+            exit(1)      
+        
+        children = []
+        for idx, coordinate in enumerate(coordinates):
+            childNode = Node(coordinate, None, idx+1)
+            if current.ifPathExists(childNode, matrix):
+                #print(f'Path from {current.number} to {childNode.number} exists')
+                children.append(childNode)
+
+        for child in children:
+            tempG = gScore[current] + current.euclideanDist(child)
+
+            if not child in gScore:
+                gScore[child] = math.inf
+
+            if tempG < gScore[child]:
+                cameFrom[child] = current
+                gScore[child] = tempG
+                fScore[child] = tempG + child.euclideanDist(endNode)
+                #print(f'F score of child: {fScore[child]}')
+
+                if (any(fScore[child], child) in n for n in openSet.queue):
+                    #print(f'Putting node {child.number} in open set with F Cost: {fScore[child]}')
+                    openSet.put((fScore[child], child))
+        
+    return False
+    """
+
+
+    startNode = Node(_start, None, 1)
+    endNode = Node(_end, None, n)
+    cost = cost
+    matrix = matrix
+    coordinates = coords
+
+    startNode.G = startNode.H = startNode.F = 0
+
+    endNode.F = 0
+    endNode.G = 0 
+    endNode.H = 0
+
+    open_list = []
+    closed_list = []
+
+    open_list.append(startNode)
+
+    while len(open_list) > 0:
+
+        current_node = open_list[0]
+        current_index = 0
+        
+        for idx, node in enumerate(open_list):
+
+            #print(f'[Checking Node]{node.coord} F value = {node.F}, ....,[Current Node] {current_node.coord} F value = {current_node.F}')
+            
+            if node.F < current_node.F:               
+                current_node = node
+                current_index = idx
+        
+        print(f'Node :     {current_node.number} ')
+
+        if current_node.coord == endNode.coord:
+            return "Found solution"
+        
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+        
+        children = []
+
+        # Loop over coordinates
+        for idx, coordinate in enumerate(coordinates):
+            childNode = Node(coordinate, None, idx+1)
+            if current_node.ifPathExists(childNode, matrix):
+                children.append(childNode)
+
+        for child in children:
+            if child in closed_list:
+                continue
+            child.G = current_node.G + current_node.euclideanDist(child)
+            child.H = child.euclideanDist(endNode)
+            child.F = child.G + child.H
+
+            for open_node in open_list:
+                if child == open_node and child.G > open_node.G:
+                    continue
+            
+            open_list.append(child)
 
 
 
-def main():
-    fl = sys.argv[1]
-    load_file(fl)
+                
+
+
+        
+
+
+def main(fl="input1"):
+    _fl = fl
+    try:
+        _fl = sys.argv[1]
+    except Exception as e:
+        print("Filename not given as param. Continuing as test run...")
+    finally:
+        pass
+    load_file(_fl)
     cavern_array = process_file(cavernFile)
     process_cavern_arr(cavern_array)
 

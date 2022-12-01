@@ -8,17 +8,22 @@ import math
 #  -> G, H + F cost
 class Node:
     def __init__(self, coord, parent, number):
-        self.coord = ()
+        self.coord = coord
         self.parent = None
         self.number = number # i.e. 1 -> n 
-        self.G = 0 # distance between current and start nodes
-        self.H = 0 # ESTIMATED distance between current and end nodes
-        self.F = 0 # Total cost of current node
+        self.G = math.inf # distance between current and start nodes
+        self.H = math.inf # ESTIMATED distance between current and end nodes
+        self.F = math.inf # Total cost of current node
+
+    def getF(self):
+        return self.F
 
     """Get the euclidean distance between two Nodes"""
     def euclideanDist(self, t_node):
-        tempX = (self.coord[0] - t_node.coord[0])^2
-        tempY = (self.coord[1] - t_node.coord[1])^2
+        if t_node.number == self.number:
+            return 0
+        tempX = (self.coord[0] - t_node.coord[0])**2
+        tempY = (self.coord[1] - t_node.coord[1])**2
         res = math.sqrt(tempX + tempY)
         return res
 
