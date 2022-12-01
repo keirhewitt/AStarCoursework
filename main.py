@@ -146,6 +146,8 @@ def AStarAlgorithm(_start, _end, n, matrix, coords, cost=1):
     endNode.G = 0 
     endNode.H = 0
 
+    startNode.F = startNode.euclideanDist(endNode)
+
     open_list = []
     closed_list = []
 
@@ -167,7 +169,10 @@ def AStarAlgorithm(_start, _end, n, matrix, coords, cost=1):
         print(f'Node :     {current_node.number} ')
 
         if current_node.coord == endNode.coord:
-            return "Found solution"
+            while current_node:
+                print(f'{current_node.number}: {current_node.F}')
+                current_node = current_node.parent
+            exit(1)
         
         open_list.pop(current_index)
         closed_list.append(current_node)
@@ -181,24 +186,21 @@ def AStarAlgorithm(_start, _end, n, matrix, coords, cost=1):
                 children.append(childNode)
 
         for child in children:
-            if child in closed_list:
-                continue
-            child.G = current_node.G + current_node.euclideanDist(child)
-            child.H = child.euclideanDist(endNode)
-            child.F = child.G + child.H
-
-            for open_node in open_list:
-                if child == open_node and child.G > open_node.G:
-                    continue
-            
-            open_list.append(child)
-
-
-
-                
-
-
-        
+            if not child in open_list and not child in closed_list:
+                child.G = current_node.G + current_node.euclideanDist(child)
+                child.H = child.euclideanDist(endNode)
+                child.F = child.G + child.H
+                child.parent = current_node
+                open_list.append(child)
+            else:
+                child.G = current_node.G + current_node.euclideanDist(child)
+                child.H = child.euclideanDist(endNode)
+                child.F = child.G + child.H
+                child.parent = current_node
+                if child in closed_list:
+                    closed_list.remove(child)
+                    open_list.append(child)
+    return "No path"
 
 
 def main(fl="input1"):
