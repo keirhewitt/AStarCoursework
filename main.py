@@ -1,11 +1,8 @@
 from queue import PriorityQueue
 import sys
 from sys import argv
-import os
 import numpy as np
-import math
 from AStarNode import Node
-import time
 
 cavernFile = ""
 fl = None
@@ -44,7 +41,6 @@ def showPath(currentNode):
     while currentNode:
         path.append(currentNode.number)
         currentNode = currentNode.parent
-    print(path[::-1])
     write_results(path[::-1])
 
 """Writes the results to file .csn"""
@@ -73,7 +69,6 @@ def AStarAlgorithm(_start, _end, n, matrix, coords):
     open_list.append(startNode)
     
     while len(open_list) > 0:
-
         current_node = open_list[0]
         current_index = 0
 
@@ -83,13 +78,9 @@ def AStarAlgorithm(_start, _end, n, matrix, coords):
                 current_node = node
                 current_index = idx
 
-        if current_node is None:
-            return "Path does not exist"
-
         # If the next node is the end node
         if current_node == endNode:
             showPath(current_node)
-            break
 
         children = []
 
@@ -99,32 +90,33 @@ def AStarAlgorithm(_start, _end, n, matrix, coords):
             if current_node.ifPathExists(childNode, matrix):
                 children.append(childNode)
 
-        for child in children:
-            if child in open_list and child.G > current_node.G:
-                continue
-            if child in closed_list:
-                continue
+        for child in children:           
+
+            # If node has not been assigned yet
             if not child in open_list and not child in closed_list:
                 child.G = current_node.G + current_node.euclideanDist(child)
                 child.H = child.euclideanDist(endNode)
                 child.F = child.G + child.H
                 child.parent = current_node
                 open_list.append(child)
-            else:
-                child.G = current_node.G + current_node.euclideanDist(child)
-                child.H = child.euclideanDist(endNode)
-                child.F = child.G + child.H
-                child.parent = current_node
-                if child in closed_list:
-                    closed_list.remove(child)
-                    open_list.append(child)
-                    #print(f'Switching child Node {child.number} from closed to open list')
-        # Node has been expanded
-        open_list.pop(current_index)
-        #print(f'Removing node {current_node.number} from open list')
-        closed_list.append(current_node)
-        #print(f'Adding node {current_node.number} to closed list')
 
+            else:
+                # Found better path
+                if child.G < current_node.G + current_node.euclideanDist(child):
+                    child.G = current_node.G + current_node.euclideanDist(child)
+                    child.H = child.euclideanDist(endNode)
+                    child.F = child.G + child.H
+                    child.parent = current_node
+
+                    # If was closed, re-open for checking
+                    if child in closed_list:
+                        closed_list.remove(child)
+                        open_list.append(child)
+
+        # Current Node has been expanded
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+    # Open list is empty
     write_results(["No Path"])
 
 """Program starting point"""
@@ -133,5 +125,4 @@ def main():
     cavern_array = process_file(_fl)
     process_cavern_arr(cavern_array)
 
-start_time = time.time()
 main()
